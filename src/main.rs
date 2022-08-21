@@ -1,5 +1,5 @@
 use anyhow::Result;
-use binance_md::Client;
+use binance_md::{market_data::Interval, Client};
 use dotenv::dotenv;
 
 #[tokio::main]
@@ -9,7 +9,7 @@ async fn main() -> Result<()> {
     println!(
         "{:#?}",
         client
-            .agg_trades("BTCUSDT", None, None, None, Some(1))
+            .kline("BTCUSDT", Interval::Minute(1), None, None, None)
             .await?
     );
     Ok(())

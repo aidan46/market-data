@@ -196,11 +196,30 @@ impl Client {
 
     /// Kline/candlestick bars for a symbol.
     /// Klines are uniquely identified by their open time.
-    pub async fn kline(&self, symbol: &str, interval: Interval) -> Result<Vec<Kline>> {
-        let url = format!(
+    /// start_time: Timestamp in ms to get aggregate trades from INCLUSIVE
+    /// end_time: Timestamp in ms to get aggregate trades until INCLUSIVE
+    /// limit: Default 500; max 1000
+    pub async fn kline(
+        &self,
+        symbol: &str,
+        interval: Interval,
+        start_time: Option<u64>,
+        end_time: Option<u64>,
+        limit: Option<u64>,
+    ) -> Result<Vec<Kline>> {
+        let mut url = format!(
             "{}{}{}{}{}",
             self.base_url, "/api/v3/klines?symbol=", symbol, "&interval=", interval
         );
+        if let (Some(s_time), Some(e_time)) = (start_time, end_time) {
+            url = format!(
+                "{}{}{}{}{}",
+                url, "&startTime=", s_time, "&endTime=", e_time
+            );
+        }
+        if let Some(limit) = limit {
+            url = format!("{}{}{}", url, "&limit=", limit);
+        }
         match self
             .client
             .get(url)
