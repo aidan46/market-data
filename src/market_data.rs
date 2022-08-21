@@ -63,6 +63,8 @@ impl Client {
 
     /// Gets order up to certain limit (default is 100; max 5000)
     /// if limit > 5000, then the response will truncate to 5000
+    /// # Errors
+    /// Returns [`Err`] if endpoint returns error
     pub async fn depth(&self, symbol: &str, limit: Option<u64>) -> Result<OrderBook> {
         let url = match limit {
             Some(limit) => format!(
@@ -81,6 +83,8 @@ impl Client {
     }
 
     /// Get recent trades up to limit (default is 500, max 1000)
+    /// # Errors
+    /// Returns [`Err`] if endpoint returns error
     pub async fn trades(&self, symbol: &str, limit: Option<u64>) -> Result<Vec<Trade>> {
         let url = match limit {
             Some(limit) => format!(
@@ -105,10 +109,12 @@ impl Client {
     /// Get compressed, aggregate trades.
     /// Trades that fill at the time, from the same order,
     /// with the same price will have the quantity aggregated.
-    /// from_id: if to get aggregate trades from INCLUSIVE
-    /// start_time: Timestamp in ms to get aggregate trades from INCLUSIVE
-    /// end_time: Timestamp in ms to get aggregate trades until INCLUSIVE
-    /// limit: Default 500; max 1000
+    /// `from_id`: if to get aggregate trades from INCLUSIVE
+    /// `start_time`: Timestamp in ms to get aggregate trades from INCLUSIVE
+    /// `end_time`: Timestamp in ms to get aggregate trades until INCLUSIVE
+    /// `limit`: Default 500; max 1000
+    /// # Errors
+    /// Returns [`Err`] if endpoint returns an error
     pub async fn agg_trades(
         &self,
         symbol: &str,
@@ -145,9 +151,11 @@ impl Client {
 
     /// Kline/candlestick bars for a symbol.
     /// Klines are uniquely identified by their open time.
-    /// start_time: Timestamp in ms to get aggregate trades from INCLUSIVE
-    /// end_time: Timestamp in ms to get aggregate trades until INCLUSIVE
-    /// limit: Default 500; max 1000
+    /// `start_time`: Timestamp in ms to get aggregate trades from INCLUSIVE
+    /// `end_time`: Timestamp in ms to get aggregate trades until INCLUSIVE
+    /// `limit`: Default 500; max 1000
+    /// # Errors
+    /// Returns [`Err`] if endpoint returns an error
     pub async fn kline(
         &self,
         symbol: &str,
@@ -182,6 +190,9 @@ impl Client {
         }
     }
 
+    /// Current average price for a symbol.
+    /// # Errors
+    /// Returns [`Err`] if endpoint returns an error
     pub async fn avg_price(&self, symbol: &str) -> Result<AvgPrice> {
         let url = format!("{}{}{}", self.base_url, "/api/v3/avgPrice?symbol=", symbol);
         match self.client.get(url).send().await?.json::<AvgPrice>().await {
