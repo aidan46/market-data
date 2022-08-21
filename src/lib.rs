@@ -1,4 +1,4 @@
-mod market_data;
+pub mod market_data;
 mod wallet;
 use anyhow::Result;
 use std::env;

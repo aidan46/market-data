@@ -6,7 +6,6 @@ use dotenv::dotenv;
 async fn main() -> Result<()> {
     dotenv()?;
     let client = Client::new()?;
-    let depth = client.depth("BTCUSDT").await?;
-    println!("{depth:#?}");
+    println!("{:#?}", client.depth("BTCUSDT", Some(2)).await?);
     Ok(())
 }
