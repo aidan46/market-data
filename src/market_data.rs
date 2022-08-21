@@ -256,4 +256,32 @@ impl Client {
             Err(e) => Err(anyhow!(e)),
         }
     }
+
+    /// Best price/qty on the order book for a symbol or symbols.
+    /// # Errors
+    /// Returns [`Err`] if endpoint returns an error
+    pub async fn book_ticker(&self, symbols: Option<&[&str]>) -> Result<Vec<BookTicker>> {
+        let mut url = format!("{}{}", self.base_url, "/api/v3/ticker/bookTicker");
+        if let Some(symbols) = symbols {
+            url = format!("{}{}", url, "?symbols=[");
+            for (i, symbol) in symbols.iter().enumerate() {
+                url = format!("{}\"{}\"", url, symbol);
+                if i != symbols.len() - 1 {
+                    url = format!("{},", url);
+                }
+            }
+            url = format!("{}]", url);
+        }
+        match self
+            .client
+            .get(url)
+            .send()
+            .await?
+            .json::<Vec<BookTicker>>()
+            .await
+        {
+            Ok(response) => Ok(response),
+            Err(e) => Err(anyhow!(e)),
+        }
+    }
 }
