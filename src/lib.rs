@@ -1,7 +1,5 @@
+#![warn(clippy::pedantic)]
 pub mod market_data;
-mod wallet;
-use anyhow::Result;
-use std::env;
 
 pub struct Client {
     base_url: String,
@@ -9,12 +7,13 @@ pub struct Client {
 }
 
 impl Client {
-    pub fn new() -> Result<Self> {
-        let base_url = env::var("ENDPOINT")?;
+    /// Constructor function
+    #[must_use]
+    pub fn new(base_url: String) -> Self {
         println!("Base url = {base_url}");
-        Ok(Self {
+        Self {
             base_url,
             client: reqwest::Client::new(),
-        })
+        }
     }
 }

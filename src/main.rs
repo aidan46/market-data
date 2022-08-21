@@ -1,16 +1,16 @@
 use anyhow::Result;
-use binance_md::{market_data::Interval, Client};
+use binance_md::Client;
 use dotenv::dotenv;
+use std::env;
 
 #[tokio::main]
 async fn main() -> Result<()> {
     dotenv()?;
-    let client = Client::new()?;
+    let base_url = env::var("ENDPOINT")?;
+    let client = Client::new(base_url);
     println!(
         "{:#?}",
-        client
-            .kline("BTCUSDT", Interval::Minute(1), None, None, None)
-            .await?
+        client.exchange_info(Some(&["BTCUSDT", "BNBBTC"])).await?
     );
     Ok(())
 }
