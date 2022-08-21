@@ -125,6 +125,37 @@ pub struct ExchangeInfo {
 
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
+pub struct PriceStats {
+    pub symbol: String,
+    #[serde(with = "string_or_float")]
+    pub price_change: f64,
+    #[serde(with = "string_or_float")]
+    pub price_change_percent: f64,
+    #[serde(with = "string_or_float")]
+    pub weighted_avg_price: f64,
+    #[serde(with = "string_or_float")]
+    pub last_price: f64,
+    #[serde(with = "string_or_float")]
+    pub open_price: f64,
+    #[serde(with = "string_or_float")]
+    pub high_price: f64,
+    #[serde(with = "string_or_float")]
+    pub low_price: f64,
+    #[serde(with = "string_or_float")]
+    pub volume: f64,
+    #[serde(with = "string_or_float")]
+    pub quote_volume: f64,
+    #[serde(with = "string_or_float")]
+    pub last_qty: f64,
+    pub open_time: u64,
+    pub close_time: u64,
+    pub first_id: u64,
+    pub last_id: u64,
+    pub count: u64,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct RateLimit {
     pub rate_limit_type: String,
     pub interval: String,

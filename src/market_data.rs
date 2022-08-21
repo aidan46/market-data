@@ -200,4 +200,32 @@ impl Client {
             Err(e) => Err(anyhow!(e)),
         }
     }
+
+    /// 24 hour rolling window price change statistics. Careful when accessing this with no symbol.
+    /// # Errors
+    /// Returns [`Err`] if endpoint returns an error
+    pub async fn price_stats_24h(&self, symbols: Option<&[&str]>) -> Result<Vec<PriceStats>> {
+        let mut url = format!("{}{}", self.base_url, "/api/v3/ticker/24hr");
+        if let Some(symbols) = symbols {
+            url = format!("{}{}", url, "?symbols=[");
+            for (i, symbol) in symbols.iter().enumerate() {
+                url = format!("{}\"{}\"", url, symbol);
+                if i != symbols.len() - 1 {
+                    url = format!("{},", url);
+                }
+            }
+            url = format!("{}]", url);
+        }
+        match self
+            .client
+            .get(url)
+            .send()
+            .await?
+            .json::<Vec<PriceStats>>()
+            .await
+        {
+            Ok(response) => Ok(response),
+            Err(e) => Err(anyhow!(e)),
+        }
+    }
 }

@@ -32,5 +32,6 @@ async fn main() -> Result<()> {
             .await?
     );
     println!("{:#?}", client.avg_price(symbol).await?);
+    println!("{:#?}", client.price_stats_24h(Some(&[symbol])).await?);
     Ok(())
 }
