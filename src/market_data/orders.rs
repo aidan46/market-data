@@ -104,8 +104,15 @@ impl Client {
         }
     }
 
-    pub async fn recent_trades(&self, symbol: &str) -> Result<Vec<Trade>> {
-        let url = format!("{}{}{}", self.base_url, "/api/v3/trades?symbol=", symbol);
+    /// Get recent trades up to limit (default is 500, max 1000)
+    pub async fn trades(&self, symbol: &str, limit: Option<u64>) -> Result<Vec<Trade>> {
+        let url = match limit {
+            Some(limit) => format!(
+                "{}{}{}{}{}",
+                self.base_url, "/api/v3/trades?symbol=", symbol, "&limit=", limit
+            ),
+            None => format!("{}{}{}", self.base_url, "/api/v3/trades?symbol=", symbol),
+        };
         match self
             .client
             .get(url)
