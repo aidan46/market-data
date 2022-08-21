@@ -156,6 +156,14 @@ pub struct PriceStats {
 
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
+pub struct SymbolPrice {
+    pub symbol: String,
+    #[serde(with = "string_or_float")]
+    pub price: f64,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct RateLimit {
     pub rate_limit_type: String,
     pub interval: String,

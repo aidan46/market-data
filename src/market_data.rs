@@ -228,4 +228,32 @@ impl Client {
             Err(e) => Err(anyhow!(e)),
         }
     }
+
+    /// Latest price for a symbol or symbols.
+    /// # Errors
+    /// Returns [`Err`] if endpoint returns an error
+    pub async fn symbol_price(&self, symbols: Option<&[&str]>) -> Result<Vec<SymbolPrice>> {
+        let mut url = format!("{}{}", self.base_url, "/api/v3/ticker/price");
+        if let Some(symbols) = symbols {
+            url = format!("{}{}", url, "?symbols=[");
+            for (i, symbol) in symbols.iter().enumerate() {
+                url = format!("{}\"{}\"", url, symbol);
+                if i != symbols.len() - 1 {
+                    url = format!("{},", url);
+                }
+            }
+            url = format!("{}]", url);
+        }
+        match self
+            .client
+            .get(url)
+            .send()
+            .await?
+            .json::<Vec<SymbolPrice>>()
+            .await
+        {
+            Ok(response) => Ok(response),
+            Err(e) => Err(anyhow!(e)),
+        }
+    }
 }
