@@ -21,17 +21,22 @@ pub struct Orders {
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Order {
-    pub price: String,
-    pub qty: String,
+    #[serde(with = "string_or_float")]
+    pub price: f64,
+    #[serde(with = "string_or_float")]
+    pub qty: f64,
 }
 
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Trade {
     pub id: u64,
-    pub price: String,
-    pub qty: String,
-    pub quote_qty: String,
+    #[serde(with = "string_or_float")]
+    pub price: f64,
+    #[serde(with = "string_or_float")]
+    pub qty: f64,
+    #[serde(with = "string_or_float")]
+    pub quote_qty: f64,
     pub time: u64,
     pub is_buyer_maker: bool,
     pub is_best_match: bool,
@@ -81,7 +86,29 @@ pub struct Kline {
 #[serde(rename_all = "camelCase")]
 pub struct AvgPrice {
     pub mins: u64,
-    pub price: String,
+    #[serde(with = "string_or_float")]
+    pub price: f64,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct AggTrade {
+    #[serde(rename = "T")]
+    pub time: u64,
+    #[serde(rename = "a")]
+    pub agg_id: u64,
+    #[serde(rename = "f")]
+    pub first_id: u64,
+    #[serde(rename = "l")]
+    pub last_id: u64,
+    #[serde(rename = "m")]
+    pub maker: bool,
+    #[serde(rename = "M")]
+    pub best_match: bool,
+    #[serde(rename = "p", with = "string_or_float")]
+    pub price: f64,
+    #[serde(rename = "q", with = "string_or_float")]
+    pub qty: f64,
 }
 
 impl Client {
@@ -129,14 +156,37 @@ impl Client {
     /// Get compressed, aggregate trades.
     /// Trades that fill at the time, from the same order,
     /// with the same price will have the quantity aggregated.
-    pub async fn agg_trades(&self, symbol: &str) -> Result<Vec<Trade>> {
-        let url = format!("{}{}{}", self.base_url, "/api/v3/trades?symbol=", symbol);
+    /// from_id: if to get aggregate trades from INCLUSIVE
+    /// start_time: Timestamp in ms to get aggregate trades from INCLUSIVE
+    /// end_time: Timestamp in ms to get aggregate trades until INCLUSIVE
+    /// limit: Default 500; max 1000
+    pub async fn agg_trades(
+        &self,
+        symbol: &str,
+        from_id: Option<u64>,
+        start_time: Option<u64>,
+        end_time: Option<u64>,
+        limit: Option<u64>,
+    ) -> Result<Vec<AggTrade>> {
+        let mut url = format!("{}{}{}", self.base_url, "/api/v3/aggTrades?symbol=", symbol);
+        if let Some(id) = from_id {
+            url = format!("{}{}{}", url, "&fromId=", id);
+        }
+        if let (Some(s_time), Some(e_time)) = (start_time, end_time) {
+            url = format!(
+                "{}{}{}{}{}",
+                url, "&startTime=", s_time, "&endTime=", e_time
+            );
+        }
+        if let Some(limit) = limit {
+            url = format!("{}{}{}", url, "&limit=", limit);
+        }
         match self
             .client
             .get(url)
             .send()
             .await?
-            .json::<Vec<Trade>>()
+            .json::<Vec<AggTrade>>()
             .await
         {
             Ok(response) => Ok(response),
@@ -169,6 +219,33 @@ impl Client {
         match self.client.get(url).send().await?.json::<AvgPrice>().await {
             Ok(response) => Ok(response),
             Err(e) => Err(anyhow!(e)),
+        }
+    }
+}
+
+pub(crate) mod string_or_float {
+    use serde::{de, Deserialize, Deserializer};
+
+    pub fn deserialize<'de, D>(deserializer: D) -> Result<f64, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        #[derive(Deserialize)]
+        #[serde(untagged)]
+        enum StringOrFloat {
+            String(String),
+            Float(f64),
+        }
+
+        match StringOrFloat::deserialize(deserializer)? {
+            StringOrFloat::String(s) => {
+                if s == "INF" {
+                    Ok(f64::INFINITY)
+                } else {
+                    s.parse().map_err(de::Error::custom)
+                }
+            }
+            StringOrFloat::Float(i) => Ok(i),
         }
     }
 }
